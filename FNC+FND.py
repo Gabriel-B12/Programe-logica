@@ -635,6 +635,9 @@ def transf_back(arbore,prop):
         prop.append(transf_back(arbore[1],prop))
         prop.append(")")
 def transf_in_formula(arbore,prop,k):
+    prop2=[]
+    if k=="∧": con="∨"
+    else : con="∧"
     if len(arbore) == 1:
         prop.append(arbore[0])
     if len(arbore) == 2:
@@ -642,50 +645,85 @@ def transf_in_formula(arbore,prop,k):
         prop.append(arbore[1])
     prop = str(prop)
     prop = re.sub("None|,|'|\[|]| ", "", prop)
-    prop1 = "";last = 0
+    prop1 = [];last = 0
     for i in range(len(prop)):
         if prop[i] == k:
             p = re.sub("\(|\)", "", prop[last:i])
-            if last == 0:
-                prop1 = prop1 + "(" + p + ")"
-            else:
-                prop1 = prop1 + k + "(" + p + ")"
+            prop1.append(p)
             last = i + 1
     if last != 0:
         p = re.sub("\(|\)", "", prop[last:len(prop)])
-        prop1 = prop1 + k + "(" + p + ")"
-    if prop1 == "":
+        prop1.append(p)
+    if prop1 == []:
         p = re.sub("\(|\)", "", prop[0:len(prop)])
-        prop1 = prop1 + p
-    return prop1
+        prop1.append(p)
+    for j in range(len(prop1)):
+        a=re.split(con,prop1[j])
+        prop2.append(a)
+    return prop2
+def simplificare(prop,k):
+    if k=="∨": k1="∧"
+    else: k1="∨"
+    prop1=[]; prop2=[];prop3=""
+    for i in prop:
+        a=copy.deepcopy(i)
+        for j in a:
+            ok=0
+            if "¬"+j in a:
+                if k=="∧": prop1.append(["⊤"]);ok=1; break
+                else:  prop1.append(["⊥"]);ok=1; break
+
+        if ok==0:
+            a=set(a); b=list(a);b.sort()
+            prop1.append(b)
+    for i in prop1:
+        if i==["⊤"] or i==["⊥"]: pass
+        else: prop2.append(i)
+    if prop2==[]:
+        if k=="∨": prop2.append(["⊥"])
+        if k=="∧": prop2.append(["⊤"])
+    global clauze
+    if k=="∧":clauze=copy.deepcopy(prop2)
+    for i in range(len(prop2)):
+        if i > 0:prop3 = prop3 + k
+        if len(prop2[i])==1 and i==0: prop3=prop3+prop2[i][0]
+        elif len(prop2[i])==1 and i>0: prop3=prop3+prop2[i][0]
+        else:
+            for j in range(len(prop2[i])):
+                if j == 0: prop3 = prop3 + "("+prop2[i][j]
+                elif j>0 and j<len(prop2[i])-1:prop3 = prop3 + k1 + prop2[i][j]
+                else: prop3=prop3+k1+prop2[i][j]+")"
+    return prop3
+
+
 
 conectori = "¬∧∨⇒⇔|∇⊤⊥"
-arbore=[];arbore1=[];arbore2=[]; poz=[]; prop=[];prop1=[];ok = 1
+arbore=[];arbore1=[];arbore2=[]; poz=[]; prop=[];prop1=[];ok = 1; clauze=[]
 print("¬ ∧ ∨ ⇒ ⇔ | ∇ ⊤ ⊥")
+print(color.TEXT)
 n=input("Propozitie:")
 n=re.sub(" +","",n)
 n=n.upper()
 n=transf(n)
 n=s_stricta(n)
 parcurgere(n)
-print("Arbore:", arbore)
+print("Arbore:", arbore,"\n")
 
 k="∧"
 arbore1=copy.deepcopy(arbore)
-print(color.TEXT)
 if poz==[] and arbore1 != []:
     while ok!=0:
         ok=0
         l_r(arbore1,k)
         parcurg(arbore1,k)
-    print("Arbore (formula in FNC): ", arbore1)
 else:
     print(color.WARNING + "-------EROARE------" );print(color.TEXT + "------Nu------")
     print(arbore);print(f"Pozitia_curenta=Arbore{poz}")
-
 transf_back(arbore1,prop)
 rez=transf_in_formula(arbore1,prop,k)
-print("Formula in FNC: ", rez,"\n")
+rez2=simplificare(rez,k)
+print("Formula in FNC: ", rez2)
+
 ok=1
 arbore1=copy.deepcopy(arbore)
 k="∨"
@@ -694,13 +732,11 @@ if poz==[] and arbore != []:
         ok=0
         l_r(arbore,k)
         parcurg(arbore,k)
-    print("Arbore (formula in FND): ", arbore)
 else:
     print(color.WARNING + "-------EROARE------" );print(color.TEXT + "------Nu------")
     print(arbore);print(f"Pozitia_curenta=Arbore{poz}")
 
 transf_back(arbore,prop1)
 rez1=transf_in_formula(arbore,prop1,k)
-print("Formula in FND: ", rez1)
-
-
+rez3=simplificare(rez1,k)
+print("Formula in FND: ", rez3); print("Multimea de clauze: ",clauze)
