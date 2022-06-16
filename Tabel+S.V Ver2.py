@@ -373,7 +373,7 @@ if len(s)==2:
     nr1=1
 else:
     tabel(arbore,poz)
-
+print("Tabelul de adevar se afla in tabel.txt")
 print("Arbore: ", arbore1)
 if nr1==nr_i: print("Formula este valida.")
 else: print("Formula este nevalida.")
